@@ -1,115 +1,128 @@
-import Amadeus from 'amadeus';
-import { format } from 'date-fns';
+import { FlightSearchParams, FlightOffer, sortFlightOffers } from '../types/flight.js';
+import { getAirportCode, getAirportName } from '../utils/airport-codes.js';
 
-interface FlightSearchParams {
-  origin: string;
-  destination: string;
-  departureDate: Date;
-  returnDate?: Date;
-  isRoundTrip?: boolean;
+interface AmadeusResponse {
+  data: Array<{
+    id: string;
+    price: {
+      total: string;
+      currency: string;
+    };
+    itineraries: Array<{
+      duration: string;
+      segments: Array<{
+        departure: {
+          iataCode: string;
+          at: string;
+        };
+        arrival: {
+          iataCode: string;
+          at: string;
+        };
+        carrierCode: string;
+        number: string;
+        duration: string;
+      }>;
+    }>;
+    bookingLink?: string;
+  }>;
 }
 
 export class AmadeusAgent {
-  private amadeus: Amadeus;
+  private apiKey: string;
+  private apiSecret: string;
 
   constructor(apiKey: string, apiSecret: string) {
-    this.amadeus = new Amadeus({
-      clientId: apiKey,
-      clientSecret: apiSecret
-    });
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
   }
 
-  async searchFlights(params: FlightSearchParams) {
+  async searchFlights(params: FlightSearchParams): Promise<FlightOffer[]> {
+    // 地名から空港コードを取得
+    const originCode = getAirportCode(params.origin);
+    const destinationCode = getAirportCode(params.destination);
+
+    if (!originCode || !destinationCode) {
+      throw new Error('空港が見つかりません。正しい地名を入力してください。');
+    }
+
+    // 空港名を取得
+    const originName = getAirportName(params.origin);
+    const destinationName = getAirportName(params.destination);
+
+    console.log(`検索中: ${originName} → ${destinationName}`);
+
     try {
-      console.log('Amadeus APIで検索中...');
-      
-      // 日付をフォーマット
-      const departureDate = format(params.departureDate, 'yyyy-MM-dd');
-      const returnDate = params.returnDate ? format(params.returnDate, 'yyyy-MM-dd') : '';
-      
-      // 空港コードを取得
-      const originAirport = await this.getAirportCode(params.origin);
-      const destinationAirport = await this.getAirportCode(params.destination);
-      
-      // フライト検索
-      const response = await this.amadeus.shopping.flightOffersSearch.get({
-        originLocationCode: originAirport,
-        destinationLocationCode: destinationAirport,
-        departureDate: departureDate,
-        returnDate: returnDate,
+      // Amadeus APIを呼び出す
+      const queryParams = new URLSearchParams({
+        originLocationCode: originCode,
+        destinationLocationCode: destinationCode,
+        departureDate: params.departureDate,
         adults: '1',
         currencyCode: 'JPY',
-        max: 5
+        max: '20'
       });
-      
-      // 結果を整形
-      const results = response.data.map(offer => {
-        const itinerary = offer.itineraries[0];
-        const segment = itinerary.segments[0];
-        const price = offer.price.total;
-        
-        return {
-          airline: segment.carrierCode,
-          flightNumber: segment.number,
+
+      if (params.isRoundTrip && params.returnDate) {
+        queryParams.append('returnDate', params.returnDate);
+      }
+
+      const response = await fetch(`https://test.api.amadeus.com/v2/shopping/flight-offers?${queryParams}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${await this.getAccessToken()}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.statusText}`);
+      }
+
+      const data: AmadeusResponse = await response.json();
+
+      const flightOffers = data.data.map((offer: any) => ({
+        id: offer.id,
+        price: {
+          amount: offer.price.total,
+          currency: offer.price.currency
+        },
+        segments: offer.itineraries[0].segments.map((segment: any) => ({
+          departureAirport: segment.departure.iataCode,
+          arrivalAirport: segment.arrival.iataCode,
           departureTime: segment.departure.at,
           arrivalTime: segment.arrival.at,
-          price: `${price} JPY`,
-          duration: itinerary.duration
-        };
-      });
-      
-      // 重複を排除
-      const uniqueResults = this.removeDuplicates(results);
-      
-      return uniqueResults;
-      
+          duration: segment.duration,
+          airline: segment.carrierCode,
+          flightNumber: segment.number
+        })),
+        bookingUrl: offer.bookingLink || 
+          `https://www.amadeus.com/flights/booking/${offer.id}?origin=${originCode}&destination=${destinationCode}&departureDate=${params.departureDate}`,
+        totalDuration: offer.itineraries[0].duration
+      }));
+
+      // 価格と所要時間でソート
+      return sortFlightOffers(flightOffers);
     } catch (error) {
-      console.error('エラーが発生しました:', error);
+      console.error('フライト検索中にエラーが発生しました:', error);
       throw error;
     }
   }
-  
-  // 重複を排除する関数
-  private removeDuplicates(flights: any[]) {
-    const uniqueFlights = [];
-    const seen = new Set();
-    
-    for (const flight of flights) {
-      // フライトの一意性を判断するキーを作成
-      const key = `${flight.airline}-${flight.flightNumber}-${flight.departureTime}-${flight.arrivalTime}-${flight.duration}`;
-      
-      // まだ見ていないフライトの場合のみ追加
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniqueFlights.push(flight);
-      }
-    }
-    
-    return uniqueFlights;
-  }
-  
-  private async getAirportCode(cityName: string): Promise<string> {
-    // 3文字の大文字の場合は既に空港コードとみなす
-    if (/^[A-Z]{3}$/.test(cityName)) {
-      return cityName;
+
+  private async getAccessToken(): Promise<string> {
+    const response = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: `grant_type=client_credentials&client_id=${this.apiKey}&client_secret=${this.apiSecret}`
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get access token');
     }
 
-    try {
-      // 都市名から空港コードを検索
-      const response = await this.amadeus.referenceData.locations.get({
-        keyword: cityName,
-        subType: 'CITY,AIRPORT'
-      });
-      
-      const location = response.data[0];
-      if (!location) {
-        throw new Error(`空港コードが見つかりません: ${cityName}`);
-      }
-      
-      return location.iataCode;
-    } catch (error) {
-      console.error('空港コードの取得に失敗しました:', error);
-      throw error;
-    }
+    const data = await response.json();
+    return data.access_token;
   }
 } 
