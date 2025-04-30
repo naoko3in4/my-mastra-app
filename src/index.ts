@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import { AmadeusAgent } from './mastra/agents/amadeus-agent.js';
-import { weatherTool } from './mastra/tools/weather-tool.js';
-import { getAirportName } from './mastra/utils/airport-codes.js';
-import { getAirlineName } from './mastra/utils/airline-codes.js';
-import { FlightOffer, FlightSegment } from './mastra/types/flight.js';
+import { AmadeusAgent } from './mastra/agents/amadeus-agent';
+import { weatherTool } from './mastra/tools/weather-tool';
+import { getAirportName } from './mastra/utils/airport-codes';
+import { getAirlineName } from './mastra/utils/airline-codes';
+import { FlightOffer, FlightSegment } from './mastra/types/flight';
 
 // コマンドライン引数を取得
 const args = process.argv.slice(2);

@@ -110,19 +110,28 @@ export class AmadeusAgent {
   }
 
   private async getAccessToken(): Promise<string> {
-    const response = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: `grant_type=client_credentials&client_id=${this.apiKey}&client_secret=${this.apiSecret}`
-    });
+    try {
+      console.log('Amadeus APIのアクセストークンを取得中...');
+      const response = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `grant_type=client_credentials&client_id=${this.apiKey}&client_secret=${this.apiSecret}`
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to get access token');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('アクセストークン取得エラー:', response.status, errorText);
+        throw new Error(`Failed to get access token: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('アクセストークン取得成功');
+      return data.access_token;
+    } catch (error) {
+      console.error('アクセストークン取得中にエラーが発生しました:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    return data.access_token;
   }
 } 

@@ -48,16 +48,86 @@ const airports: Airport[] = [
     cityJa: 'サンフランシスコ',
     nameJa: 'サンフランシスコ国際空港'
   },
-  { code: 'LHR', name: 'London Heathrow Airport', city: 'London', country: 'United Kingdom' },
-  { code: 'CDG', name: 'Charles de Gaulle Airport', city: 'Paris', country: 'France' },
-  { code: 'FRA', name: 'Frankfurt Airport', city: 'Frankfurt', country: 'Germany' },
-  { code: 'SIN', name: 'Singapore Changi Airport', city: 'Singapore', country: 'Singapore' },
-  { code: 'HKG', name: 'Hong Kong International Airport', city: 'Hong Kong', country: 'China' },
-  { code: 'ICN', name: 'Incheon International Airport', city: 'Seoul', country: 'South Korea' },
-  { code: 'SYD', name: 'Sydney Airport', city: 'Sydney', country: 'Australia' },
-  { code: 'DXB', name: 'Dubai International Airport', city: 'Dubai', country: 'United Arab Emirates' },
-  { code: 'BKK', name: 'Suvarnabhumi Airport', city: 'Bangkok', country: 'Thailand' },
-  { code: 'MNL', name: 'Ninoy Aquino International Airport', city: 'Manila', country: 'Philippines' },
+  { 
+    code: 'LHR', 
+    name: 'London Heathrow Airport', 
+    city: 'London', 
+    country: 'United Kingdom',
+    cityJa: 'ロンドン',
+    nameJa: 'ヒースロー空港'
+  },
+  { 
+    code: 'CDG', 
+    name: 'Charles de Gaulle Airport', 
+    city: 'Paris', 
+    country: 'France',
+    cityJa: 'パリ',
+    nameJa: 'シャルル・ド・ゴール空港'
+  },
+  { 
+    code: 'FRA', 
+    name: 'Frankfurt Airport', 
+    city: 'Frankfurt', 
+    country: 'Germany',
+    cityJa: 'フランクフルト',
+    nameJa: 'フランクフルト空港'
+  },
+  { 
+    code: 'SIN', 
+    name: 'Singapore Changi Airport', 
+    city: 'Singapore', 
+    country: 'Singapore',
+    cityJa: 'シンガポール',
+    nameJa: 'チャンギ国際空港'
+  },
+  { 
+    code: 'HKG', 
+    name: 'Hong Kong International Airport', 
+    city: 'Hong Kong', 
+    country: 'China',
+    cityJa: '香港',
+    nameJa: '香港国際空港'
+  },
+  { 
+    code: 'ICN', 
+    name: 'Incheon International Airport', 
+    city: 'Seoul', 
+    country: 'South Korea',
+    cityJa: 'ソウル',
+    nameJa: '仁川国際空港'
+  },
+  { 
+    code: 'SYD', 
+    name: 'Sydney Airport', 
+    city: 'Sydney', 
+    country: 'Australia',
+    cityJa: 'シドニー',
+    nameJa: 'シドニー空港'
+  },
+  { 
+    code: 'DXB', 
+    name: 'Dubai International Airport', 
+    city: 'Dubai', 
+    country: 'United Arab Emirates',
+    cityJa: 'ドバイ',
+    nameJa: 'ドバイ国際空港'
+  },
+  { 
+    code: 'BKK', 
+    name: 'Suvarnabhumi Airport', 
+    city: 'Bangkok', 
+    country: 'Thailand',
+    cityJa: 'バンコク',
+    nameJa: 'スワンナプーム国際空港'
+  },
+  { 
+    code: 'MNL', 
+    name: 'Ninoy Aquino International Airport', 
+    city: 'Manila', 
+    country: 'Philippines',
+    cityJa: 'マニラ',
+    nameJa: 'ニノイ・アキノ国際空港'
+  },
   { 
     code: 'YYZ', 
     name: 'Toronto Pearson International Airport', 
@@ -82,6 +152,30 @@ const airports: Airport[] = [
     cityJa: '台北',
     nameJa: '台湾桃園国際空港'
   },
+  { 
+    code: 'VIE', 
+    name: 'Vienna International Airport', 
+    city: 'Vienna', 
+    country: 'Austria',
+    cityJa: 'ウィーン',
+    nameJa: 'ウィーン国際空港'
+  },
+  { 
+    code: 'GMP', 
+    name: 'Gimpo International Airport', 
+    city: 'Seoul', 
+    country: 'South Korea',
+    cityJa: 'ソウル',
+    nameJa: '金浦国際空港'
+  },
+  { 
+    code: 'NGO', 
+    name: 'Chubu Centrair International Airport', 
+    city: 'Nagoya', 
+    country: 'Japan',
+    cityJa: '名古屋',
+    nameJa: '中部国際空港'
+  }
 ];
 
 export function findAirportByCity(city: string): Airport | undefined {
