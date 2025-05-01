@@ -2,15 +2,24 @@ import { AmadeusAgent } from '../agents/amadeus-agent';
 import { weatherTool } from '../tools/weather-tool';
 import { findDestinationsByWeather, findDestinationByCity, Destination } from '../utils/destinations';
 import { getAirportCode } from '../utils/airport-codes';
-import { FlightOffer } from '../types/flight';
+import { FlightOffer, FlightSegment } from '../types/flight';
 
 interface WeatherInfo {
-  temperature: number;
-  feelsLike: number;
-  humidity: number;
-  windSpeed: number;
-  windGust: number;
-  conditions: string;
+  current: {
+    temperature: number;
+    feelsLike: number;
+    humidity: number;
+    windSpeed: number;
+    windGust: number;
+    conditions: string;
+  };
+  forecast: {
+    avgMaxTemperature: number;
+    avgMinTemperature: number;
+    avgPrecipitation: number;
+    conditions: string;
+    days: number;
+  };
   location: string;
 }
 
@@ -26,8 +35,11 @@ interface TravelSuggestion {
     };
     duration: string;
     airline: string;
+    segments: FlightSegment[];
+    bookingUrl: string;
   };
   score: number;
+  scoreExplanation?: string;
 }
 
 // モックフライトデータ
@@ -89,7 +101,12 @@ export class TravelAdvisor {
     // 価格、所要時間、天気を考慮してスコアを計算
     const priceScore = 1 - (price / 300000); // 30万円を基準
     const durationScore = 1 - (duration / (24 * 60)); // 24時間を基準
-    const weatherScore = (weather.temperature >= 20 && weather.temperature <= 28) ? 1 : 0.5;
+    
+    // 天気スコアの計算を改善
+    const avgTemp = (weather.forecast.avgMaxTemperature + weather.forecast.avgMinTemperature) / 2;
+    const tempScore = (avgTemp >= 20 && avgTemp <= 28) ? 1 : 0.5;
+    const precipitationScore = weather.forecast.avgPrecipitation < 5 ? 1 : 0.5;
+    const weatherScore = (tempScore + precipitationScore) / 2;
     
     return (priceScore * 0.4) + (durationScore * 0.3) + (weatherScore * 0.3);
   }
@@ -105,7 +122,7 @@ export class TravelAdvisor {
     // 候補となる目的地の天気を確認
     const weatherPromises = findDestinationsByWeather(20, 30).map(async (dest: Destination) => {
       try {
-        const weather = await weatherTool.execute(dest.city);
+        const weather = await weatherTool.execute(dest.city, departureDate, returnDate);
         const destCode = getAirportCode(dest.city);
         
         if (!destCode) {
@@ -156,6 +173,12 @@ export class TravelAdvisor {
             weather
           );
 
+          // スコア理由説明文を生成
+          const scoreExplanation =
+            `価格: ${priceAmount.toLocaleString()}円、所要時間: ${Math.floor(durationMinutes/60)}時間${durationMinutes%60}分、` +
+            `天気: ${weather.forecast.conditions}、平均気温: ${((weather.forecast.avgMaxTemperature + weather.forecast.avgMinTemperature)/2).toFixed(1)}℃、` +
+            `降水量: ${weather.forecast.avgPrecipitation.toFixed(1)}mm などを総合評価しています。`;
+
           suggestions.push({
             destination: dest.city,
             destinationJa: dest.cityJa,
@@ -167,9 +190,12 @@ export class TravelAdvisor {
                 currency: bestFlight.price.currency
               },
               duration: bestFlight.totalDuration || '不明',
-              airline: bestFlight.segments[0].airline
+              airline: bestFlight.segments[0].airline,
+              segments: bestFlight.segments,
+              bookingUrl: bestFlight.bookingUrl
             },
-            score
+            score,
+            scoreExplanation
           });
         }
       } catch (error) {

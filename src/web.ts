@@ -2,6 +2,8 @@ import express from 'express';
 import path from 'path';
 import { TravelAdvisor } from './mastra/services/travel-advisor';
 import * as dotenv from 'dotenv';
+import { getAirportName } from './mastra/utils/airport-codes';
+import { getAirlineName } from './mastra/utils/airline-codes';
 
 // 環境変数の読み込み
 dotenv.config();
@@ -65,7 +67,9 @@ app.post('/suggest', async (req, res) => {
       suggestions,
       origin,
       departureDate,
-      returnDate
+      returnDate,
+      getAirportName,
+      getAirlineName
     });
   } catch (error) {
     console.error('エラーが発生しました:', error);

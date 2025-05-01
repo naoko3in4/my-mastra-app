@@ -3,77 +3,192 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>おすすめの旅行先</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>旅行先の提案</title>
   <style>
     body {
-      background-color: #f8f9fa;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
     }
     .container {
-      max-width: 1000px;
-      margin-top: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .suggestion-card {
-      border-radius: 15px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1.5rem;
-      transition: transform 0.2s;
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
     }
-    .suggestion-card:hover {
-      transform: translateY(-5px);
+    .search-info {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
     }
-    .weather-icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+    .suggestion {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background-color: white;
     }
-    .score-badge {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      font-size: 1.2rem;
+    .suggestion:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .destination {
+      font-size: 1.5em;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    .weather-info {
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 0;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+    .weather-current, .weather-forecast {
+      flex: 1;
+      padding: 0 10px;
+    }
+    .flight-info {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+    }
+    .score {
+      font-size: 1.2em;
+      color: #27ae60;
+      font-weight: bold;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #3498db;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .historical-note {
+      font-size: 0.8em;
+      color: #999;
+    }
+    .score-explanation {
+      margin-top: 10px;
+      font-size: 0.8em;
+      color: #999;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1 class="text-center mb-4">おすすめの旅行先</h1>
-    <div class="row">
-      <% suggestions.forEach(suggestion => { %>
-        <div class="col-md-6 mb-4">
-          <div class="card suggestion-card">
-            <div class="card-body">
-              <span class="badge bg-primary score-badge">
-                スコア: <%= Math.round(suggestion.score * 100) %>点
-              </span>
-              <h2 class="card-title"><%= suggestion.destinationJa %></h2>
-              <p class="card-text"><%= suggestion.description %></p>
-              
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <h5>天気情報</h5>
-                  <p>
-                    気温: <%= suggestion.weather.temperature %>℃<br>
-                    降水確率: <%= suggestion.weather.precipitation %>%<br>
-                    天候: <%= suggestion.weather.condition %>
-                  </p>
-                </div>
-                <div class="col-md-6">
-                  <h5>フライト情報</h5>
-                  <p>
-                    価格: <%= suggestion.flight.price.amount.toLocaleString() %> <%= suggestion.flight.price.currency %><br>
-                    所要時間: <%= suggestion.flight.duration %><br>
-                    航空会社: <%= suggestion.flight.airline %>
-                  </p>
-                </div>
+    <h1>旅行先の提案</h1>
+    
+    <div class="search-info">
+      <p>出発地: <%= origin %></p>
+      <p>出発日: <%= departureDate %></p>
+      <p>帰国日: <%= returnDate %></p>
+    </div>
+
+    <% if (suggestions && suggestions.length > 0) { %>
+      <div id="suggestion-list">
+        <% suggestions.forEach(function(suggestion, idx) { %>
+          <div class="suggestion" style="<%= idx > 2 ? 'display:none' : '' %>">
+            <div class="destination">
+              <%= suggestion.destinationJa %> (<%= suggestion.destination %>)
+            </div>
+            <p><%= suggestion.description %></p>
+            <div class="weather-info">
+              <div class="weather-current">
+                <h3>現在の天気</h3>
+                <p>気温: <%= Math.ceil(suggestion.weather.current.temperature) %>℃</p>
+                <p>体感温度: <%= Math.ceil(suggestion.weather.current.feelsLike) %>℃</p>
+                <p>湿度: <%= suggestion.weather.current.humidity %>%</p>
+                <p>天気: <%= suggestion.weather.current.conditions %></p>
+              </div>
+              <div class="weather-forecast">
+                <h3>旅行期間中の予測</h3>
+                <% if (suggestion.weather.forecast.isHistorical) { %>
+                  <p class="historical-note">※ 過去5年間の平均データを表示しています</p>
+                <% } %>
+                <p>平均最高気温: <%= suggestion.weather.forecast.avgMaxTemperature.toFixed(1) %>°C</p>
+                <p>平均最低気温: <%= suggestion.weather.forecast.avgMinTemperature.toFixed(1) %>°C</p>
+                <p>平均降水量: <%= suggestion.weather.forecast.avgPrecipitation.toFixed(1) %>mm</p>
+                <p>主な天気: <%= suggestion.weather.forecast.conditions %></p>
+                <p>予測日数: <%= suggestion.weather.forecast.days %>日</p>
               </div>
             </div>
+            <div class="flight-info">
+              <h3>フライト情報</h3>
+              <p>価格: <%= suggestion.flight.price.amount.toLocaleString() %> <%= suggestion.flight.price.currency %></p>
+              <p>所要時間: <%= suggestion.flight.duration.replace('PT','').replace('H','時間').replace('M','分') %></p>
+              <p>航空会社: <%= suggestion.flight.airline %></p>
+              <div>
+                <h4>区間詳細</h4>
+                <% const airportNames = typeof getAirportName === 'function' ? getAirportName : function(code){return code;}; %>
+                <% const airlineNames = typeof getAirlineName === 'function' ? getAirlineName : function(code){return code;}; %>
+                <ol>
+                  <% suggestion.flight.segments.forEach(function(seg, i) { %>
+                    <li>
+                      <strong>区間<%= i+1 %></strong><br>
+                      出発空港: <%= airportNames(seg.departureAirport) %>（<%= seg.departureAirport %>） / 出発時間: <%= seg.departureTime.replace('T',' ').slice(0,16) %><br>
+                      到着空港: <%= airportNames(seg.arrivalAirport) %>（<%= seg.arrivalAirport %>） / 到着時間: <%= seg.arrivalTime.replace('T',' ').slice(0,16) %><br>
+                      航空会社: <%= airlineNames(seg.airline) %>（<%= seg.airline %>） / 便名: <%= seg.flightNumber %><br>
+                      区間所要時間: <%= seg.duration.replace('PT','').replace('H','時間').replace('M','分') %>
+                      <% if (i > 0) { %>
+                        <% /* 乗り継ぎ地での接続時間計算 */ %>
+                        <% const prev = suggestion.flight.segments[i-1];
+                           const layover = (new Date(seg.departureTime) - new Date(prev.arrivalTime)) / 60000;
+                           const layoverH = Math.floor(layover/60);
+                           const layoverM = layover%60;
+                        %>
+                        <br>乗り継ぎ地: <%= airportNames(seg.departureAirport) %>（<%= seg.departureAirport %>） / 接続時間: <%= layoverH %>時間<%= layoverM %>分
+                        <br>乗り継ぎ地での出発時間: <%= seg.departureTime.replace('T',' ').slice(0,16) %>
+                      <% } %>
+                    </li>
+                  <% }); %>
+                </ol>
+              </div>
+            </div>
+            <div class="score">
+              スコア: <%= (suggestion.score * 100).toFixed(1) %>%
+            </div>
+            <div class="score-explanation">
+              <%= suggestion.scoreExplanation || '' %>
+            </div>
+            <% if (suggestion.flight.bookingUrl) { %>
+              <div style="margin-top:10px;">
+                <a href="<%= suggestion.flight.bookingUrl %>" target="_blank" class="btn btn-success">この航空券を購入</a>
+              </div>
+            <% } %>
           </div>
+        <% }); %>
+      </div>
+      <% if (suggestions.length > 3) { %>
+        <div class="text-center">
+          <button id="show-more" class="btn btn-secondary">もっと出す</button>
         </div>
-      <% }); %>
-    </div>
-    <div class="text-center mt-4">
-      <a href="/" class="btn btn-primary">新しい検索を始める</a>
-    </div>
+        <script>
+          document.getElementById('show-more').onclick = function() {
+            document.querySelectorAll('.suggestion').forEach(function(el){ el.style.display = ''; });
+            this.style.display = 'none';
+          };
+        </script>
+      <% } %>
+    <% } else { %>
+      <p>条件に合う旅行先が見つかりませんでした。</p>
+    <% } %>
+    
+    <a href="/" class="back-link">← 検索に戻る</a>
   </div>
 </body>
 </html> 

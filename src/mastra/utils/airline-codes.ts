@@ -14,7 +14,8 @@ export const airlines: Airline[] = [
   { code: 'NH', name: 'All Nippon Airways', nameJa: '全日本空輸' },
   { code: 'UA', name: 'United Airlines', nameJa: 'ユナイテッド航空' },
   { code: 'AA', name: 'American Airlines', nameJa: 'アメリカン航空' },
-  { code: 'DL', name: 'Delta Air Lines', nameJa: 'デルタ航空' }
+  { code: 'DL', name: 'Delta Air Lines', nameJa: 'デルタ航空' },
+  { code: 'OZ', name: 'Asiana Airlines', nameJa: 'アシアナ航空' }
 ];
 
 export function getAirlineName(code: string): string {
